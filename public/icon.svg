@@ -1,0 +1,63 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with glass morphism effect -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0f0f0f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Checkmark gradient -->
+    <linearGradient id="checkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d4aa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Arrow gradient -->
+    <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d4aa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glow effects -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="glowStrong">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Rounded background -->
+  <rect x="32" y="32" width="448" height="448" rx="80" fill="url(#bgGradient)" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  
+  <!-- Checkmark (upper left) -->
+  <path d="M 160 200 L 220 260 L 320 160" 
+        stroke="url(#checkGradient)" 
+        stroke-width="16" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        fill="none"
+        filter="url(#glow)"/>
+  
+  <!-- Curved arrow (lower right) -->
+  <path d="M 280 320 Q 360 280 400 320 L 380 340 L 400 320 L 380 300" 
+        stroke="url(#arrowGradient)" 
+        stroke-width="16" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        fill="none"
+        filter="url(#glow)"/>
+  
+  <!-- Subtle inner glow -->
+  <rect x="48" y="48" width="416" height="416" rx="72" fill="none" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+</svg> 
