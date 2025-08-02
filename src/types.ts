@@ -2,6 +2,7 @@ export interface Task {
   id: string;
   text: string;
   completed: boolean;
+  is_cleared: boolean;
   createdAt: Date;
   completedAt?: Date;
 }

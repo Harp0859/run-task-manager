@@ -31,8 +31,8 @@ import {
   loadUserSettings, 
   initializeUserData,
   saveUserStreaks,
-  saveTaskHistory,
   loadTaskHistory,
+  clearCompletedTasks,
 } from './services/supabaseService';
 
 // Styles
@@ -52,7 +52,7 @@ const AppContent: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  // Calculate streaks from completed tasks and history
+  // Calculate streaks from completed tasks AND history (lifetime achievements)
   const calculateStreaks = useCallback((tasks: Task[], taskHistory: any[] = []) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -64,13 +64,13 @@ const AppContent: React.FC = () => {
     let weeklyStreak = 0;
     let monthlyStreak = 0;
 
-    // Combine current tasks and task history for streak calculation
-    const allCompletedTasks = [
-      ...tasks.filter(task => task.completed && task.completedAt),
-      ...taskHistory
-    ];
+    // Count BOTH current completed tasks AND task history for lifetime streaks
+    const currentCompletedTasks = tasks.filter(task => task.completed && task.completedAt);
+    const allCompletedTasks = [...currentCompletedTasks, ...taskHistory];
 
     allCompletedTasks.forEach(task => {
+      if (!task.completedAt) return; // Skip if no completion date
+      
       const completedDate = new Date(task.completedAt);
       const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
       
@@ -88,6 +88,15 @@ const AppContent: React.FC = () => {
       if (completedDate >= startOfMonth && completedDate <= now) {
         monthlyStreak++;
       }
+    });
+
+    console.log('📊 Lifetime streak calculation:', {
+      currentCompletedTasks: currentCompletedTasks.length,
+      taskHistoryLength: taskHistory.length,
+      totalCompletedTasks: allCompletedTasks.length,
+      dailyStreak,
+      weeklyStreak,
+      monthlyStreak
     });
 
     return { dailyStreak, weeklyStreak, monthlyStreak };
@@ -148,14 +157,14 @@ const AppContent: React.FC = () => {
           if (historyError) {
             console.error('Failed to load task history:', historyError);
           }
-          
-          // Calculate streaks from loaded tasks
+
+          // Calculate streaks from loaded tasks only (no task history table exists)
           const calculatedStreaks = calculateStreaks(tasks || [], taskHistory || []);
           
           // Reset app state with user-specific data
           setAppState({
             tasks: tasks || [],
-            taskHistory: taskHistory || [], // Load history from Supabase
+            taskHistory: taskHistory || [],
             monthlyStreak: calculatedStreaks.monthlyStreak,
             dailyStreak: calculatedStreaks.dailyStreak,
             weeklyStreak: calculatedStreaks.weeklyStreak,
@@ -189,20 +198,35 @@ const AppContent: React.FC = () => {
   const addTask = useCallback(async (text: string) => {
     if (!user) return;
     
+    // Generate a proper UUID for the task ID
+    const generateUUID = () => {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : ((r & 0x3) | 0x8);
+        return v.toString(16);
+      });
+    };
+    
     const newTask: Task = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       text,
       completed: false,
+      is_cleared: false,
       createdAt: new Date(),
     };
     
-    // Save to Supabase
+    console.log('🆕 Creating new task with UUID:', newTask.id);
+    
+    // Save to database first
     const { error } = await saveTask(newTask, user.id);
     if (error) {
-      console.error('Failed to save task to database:', error);
-      return;
+      console.error('❌ Failed to save task to database:', error);
+      return; // Don't update local state if database save failed
     }
     
+    console.log('✅ Task saved to database successfully');
+    
+    // Update local state only after successful database save
     setAppState(prev => ({
       ...prev,
       tasks: [...prev.tasks, newTask],
@@ -212,113 +236,152 @@ const AppContent: React.FC = () => {
   const toggleTaskComplete = useCallback(async (id: string) => {
     if (!user) return;
     
-    setAppState(prev => {
-      const updatedTasks = prev.tasks.map(task => {
-        if (task.id === id) {
-          const completed = !task.completed;
-          const updatedTask = {
-            ...task,
-            completed,
-            completedAt: completed ? new Date() : undefined,
-          };
-          
-          // Update in Supabase
-          updateTask(updatedTask, user.id);
-          
-          return updatedTask;
-        }
-        return task;
-      });
-
-      const toggledTask = updatedTasks.find(task => task.id === id);
-      let newHistory = [...prev.taskHistory];
-      
-      if (toggledTask && toggledTask.completed && toggledTask.completedAt) {
-        newHistory = addToHistory(toggledTask, prev.taskHistory);
-        
-        // Save task history to Supabase
-        saveTaskHistory(newHistory, user.id);
+    // Find the current task
+    const currentTask = appState.tasks.find(task => task.id === id);
+    if (!currentTask) return;
+    
+    // Calculate the new state
+    const completed = !currentTask.completed;
+    const updatedTask = {
+      ...currentTask,
+      completed,
+      completedAt: completed ? new Date() : undefined,
+    };
+    
+    console.log('🔄 Toggling task:', currentTask.text, 'to completed:', completed);
+    console.log('📊 Current streaks before toggle:', {
+      daily: appState.dailyStreak,
+      weekly: appState.weeklyStreak,
+      monthly: appState.monthlyStreak
+    });
+    
+    // Update in database first
+    try {
+      const { error } = await updateTask(updatedTask, user.id);
+      if (error) {
+        console.error('❌ Failed to update task in database:', error);
+        return; // Don't update local state if database update failed
       }
+      
+      console.log('✅ Task updated in database successfully');
+      
+      // Now update local state after successful database update
+      setAppState(prev => {
+        const updatedTasks = prev.tasks.map(task => 
+          task.id === id ? updatedTask : task
+        );
 
-      // Calculate streaks based on completed tasks and current date
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      // Count completed tasks for each period (including history)
-      const allCompletedTasks = [
-        ...updatedTasks.filter(task => task.completed && task.completedAt),
-        ...prev.taskHistory
-      ];
-
-      let dailyStreak = 0;
-      let weeklyStreak = 0;
-      let monthlyStreak = 0;
-
-      allCompletedTasks.forEach(task => {
-        if (!task.completedAt) return; // Skip if no completion date
+        const toggledTask = updatedTask;
+        let newHistory = [...prev.taskHistory];
         
-        const completedDate = new Date(task.completedAt);
-        const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
-        
-        // Daily streak: tasks completed today
-        if (completedDay.getTime() === today.getTime()) {
-          dailyStreak++;
+        if (toggledTask && toggledTask.completed && toggledTask.completedAt) {
+          console.log('✅ Task completed:', toggledTask.text);
+          newHistory = addToHistory(toggledTask, prev.taskHistory);
+          console.log('📚 History updated locally:', newHistory.length, 'items');
         }
-        
-        // Weekly streak: tasks completed this week
-        if (completedDate >= startOfWeek && completedDate <= now) {
-          weeklyStreak++;
-        }
-        
-        // Monthly streak: tasks completed this month
-        if (completedDate >= startOfMonth && completedDate <= now) {
-          monthlyStreak++;
-        }
-      });
 
-      const updatedState = {
-        ...prev,
-        tasks: updatedTasks,
-        taskHistory: newHistory,
-        dailyStreak,
-        weeklyStreak,
-        monthlyStreak,
-      };
+        // Calculate streaks based on completed tasks and current date
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Save updated streaks to Supabase
-      if (toggledTask && toggledTask.completed && toggledTask.completedAt) {
-        // Save streaks to Supabase
-        saveUserStreaks(user.id, {
+        // Count BOTH current completed tasks AND task history for lifetime streaks
+        const currentCompletedTasks = updatedTasks.filter(task => task.completed && task.completedAt);
+        const allCompletedTasks = [...currentCompletedTasks, ...prev.taskHistory];
+
+        let dailyStreak = 0;
+        let weeklyStreak = 0;
+        let monthlyStreak = 0;
+
+        allCompletedTasks.forEach(task => {
+          if (!task.completedAt) return; // Skip if no completion date
+          
+          const completedDate = new Date(task.completedAt);
+          const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+          
+          // Daily streak: tasks completed today
+          if (completedDay.getTime() === today.getTime()) {
+            dailyStreak++;
+          }
+          
+          // Weekly streak: tasks completed this week
+          if (completedDate >= startOfWeek && completedDate <= now) {
+            weeklyStreak++;
+          }
+          
+          // Monthly streak: tasks completed this month
+          if (completedDate >= startOfMonth && completedDate <= now) {
+            monthlyStreak++;
+          }
+        });
+
+        console.log('📊 Lifetime streak calculation:', {
+          currentCompletedTasks: currentCompletedTasks.length,
+          taskHistoryLength: prev.taskHistory.length,
+          totalCompletedTasks: allCompletedTasks.length,
           dailyStreak,
           weeklyStreak,
           monthlyStreak,
+          toggledTask: toggledTask?.text,
+          action: toggledTask?.completed ? 'COMPLETED' : 'UNCOMPLETED',
+          previousStreaks: {
+            daily: prev.dailyStreak,
+            weekly: prev.weeklyStreak,
+            monthly: prev.monthlyStreak
+          }
         });
-        
-        console.log('Streak updated:', {
-          daily: dailyStreak,
-          weekly: weeklyStreak,
-          monthly: monthlyStreak,
-          user: user.id
-        });
-      }
 
-      return updatedState;
-    });
-  }, [user]);
+        const updatedState = {
+          ...prev,
+          tasks: updatedTasks,
+          taskHistory: newHistory,
+          dailyStreak,
+          weeklyStreak,
+          monthlyStreak,
+        };
+
+        // Save updated streaks to Supabase
+        if (toggledTask && toggledTask.completed && toggledTask.completedAt) {
+          // Save streaks to Supabase
+          saveUserStreaks(user.id, {
+            dailyStreak,
+            weeklyStreak,
+            monthlyStreak,
+          });
+          
+          console.log('💾 Streaks saved to database:', {
+            daily: dailyStreak,
+            weekly: weeklyStreak,
+            monthly: monthlyStreak,
+            user: user.id
+          });
+        }
+
+        return updatedState;
+      });
+      
+    } catch (error) {
+      console.error('❌ Error updating task:', error);
+    }
+  }, [user, appState.tasks, appState.dailyStreak, appState.weeklyStreak, appState.monthlyStreak]);
 
   const deleteTask = useCallback(async (id: string) => {
     if (!user) return;
     
-    // Delete from Supabase
+    console.log('🗑️ Deleting task:', id);
+    
+    // Delete from database first
     const { error } = await deleteTaskFromDB(id, user.id);
     if (error) {
-      console.error('Failed to delete task from database:', error);
-      return;
+      console.error('❌ Failed to delete task from database:', error);
+      return; // Don't update local state if database delete failed
     }
     
+    console.log('✅ Task deleted from database successfully');
+    
+    // Update local state only after successful database delete
     setAppState(prev => ({
       ...prev,
       tasks: prev.tasks.filter(task => task.id !== id),
@@ -333,22 +396,66 @@ const AppContent: React.FC = () => {
       .filter(task => task.completed)
       .map(task => task.id);
     
-    // Delete completed tasks from Supabase
-    for (const taskId of completedTaskIds) {
-      const { error } = await deleteTaskFromDB(taskId, user.id);
-      if (error) {
-        console.error('Failed to delete completed task from database:', error);
-      }
+    console.log('🧹 Clearing completed tasks:', completedTaskIds.length, 'tasks');
+    console.log('📊 Current streaks before clear:', {
+      daily: appState.dailyStreak,
+      weekly: appState.weeklyStreak,
+      monthly: appState.monthlyStreak
+    });
+    console.log('📚 Task history before clear:', appState.taskHistory.length, 'items');
+    
+    // Clear completed tasks in the database (this will move them to task_history and delete from tasks)
+    const { error } = await clearCompletedTasks(user.id);
+    if (error) {
+      console.error('❌ Failed to clear completed tasks from database:', error);
+      return;
     }
     
-    // Update local state - remove completed tasks from home page
-    // but keep them in taskHistory for streaks calculation
-    setAppState(prev => ({
-      ...prev,
-      tasks: prev.tasks.filter(task => !task.completed),
-      // Note: taskHistory remains unchanged to preserve streaks
-    }));
-  }, [user, appState.tasks]);
+    console.log('✅ Database clear operation completed successfully');
+    
+    // Reload tasks from database to ensure local state matches database
+    const { data: updatedTasks, error: loadError } = await loadTasks(user.id);
+    if (loadError) {
+      console.error('❌ Failed to reload tasks after clear:', loadError);
+      return;
+    }
+    
+    console.log('📋 Reloaded tasks from database:', updatedTasks?.length || 0);
+    
+    // Reload task history from database
+    const { data: updatedHistory, error: historyError } = await loadTaskHistory(user.id);
+    if (historyError) {
+      console.error('❌ Failed to reload task history after clear:', historyError);
+      return;
+    }
+    
+    console.log('📚 Reloaded task history from database:', updatedHistory?.length || 0);
+    
+    // Update local state with fresh data from database
+    setAppState(prev => {
+      // Keep existing streaks - don't reset them when clearing tasks
+      const newState = {
+        ...prev,
+        tasks: updatedTasks || [],
+        taskHistory: updatedHistory || prev.taskHistory,
+        // Keep existing streaks - they are lifetime
+        dailyStreak: prev.dailyStreak,
+        weeklyStreak: prev.weeklyStreak,
+        monthlyStreak: prev.monthlyStreak,
+      };
+      
+      console.log('✅ Clear completed - Database updated and local state refreshed');
+      console.log('📚 Task history from database:', newState.taskHistory.length, 'items');
+      console.log('📊 Streaks preserved (lifetime):', {
+        daily: prev.dailyStreak,
+        weekly: prev.weeklyStreak,
+        monthly: prev.monthlyStreak,
+        remainingCompletedTasks: (updatedTasks || []).filter(task => task.completed && task.completedAt).length
+      });
+      
+      return newState;
+    });
+  }, [user, appState.tasks, appState.dailyStreak, appState.weeklyStreak, appState.monthlyStreak, appState.taskHistory.length]);
 
   // Settings and History Handlers
   const handleSaveSettings = useCallback((newSettings: SettingsType) => {
@@ -376,7 +483,17 @@ const AppContent: React.FC = () => {
   }, [signOut]);
 
   // Memoized Calculations
-  const currentStreak = useMemo(() => getCurrentStreak(appState), [appState]);
+  const currentStreak = useMemo(() => {
+    const streak = getCurrentStreak(appState);
+    console.log('🎯 Current streak calculated:', {
+      streak,
+      streakDuration: appState.settings.streakDuration,
+      dailyStreak: appState.dailyStreak,
+      weeklyStreak: appState.weeklyStreak,
+      monthlyStreak: appState.monthlyStreak
+    });
+    return streak;
+  }, [appState]);
   const hasCompletedTasks = useMemo(() => 
     appState.tasks.some(task => task.completed), 
     [appState.tasks]

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import './EliteTaskInput.css';
 
 interface EliteTaskInputProps {
@@ -87,7 +87,7 @@ const EliteTaskInput: React.FC<EliteTaskInputProps> = ({ onAddTask }) => {
               whileTap={{ scale: 0.95 }}
               transition={{ duration: 0.2 }}
             >
-              <Plus size={18} />
+              Add
             </motion.button>
           )}
         </AnimatePresence>

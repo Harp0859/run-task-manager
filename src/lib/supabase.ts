@@ -77,6 +77,7 @@ export interface Database {
           user_id: string;
           text: string;
           completed: boolean;
+          is_cleared: boolean;
           created_at: string;
           completed_at?: string;
         };
@@ -85,6 +86,7 @@ export interface Database {
           user_id: string;
           text: string;
           completed?: boolean;
+          is_cleared?: boolean;
           created_at?: string;
           completed_at?: string;
         };
@@ -93,6 +95,7 @@ export interface Database {
           user_id?: string;
           text?: string;
           completed?: boolean;
+          is_cleared?: boolean;
           created_at?: string;
           completed_at?: string;
         };
@@ -121,6 +124,32 @@ export interface Database {
           theme?: 'dark' | 'light';
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      task_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          task_id: string;
+          text: string;
+          created_at: string;
+          completed_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          task_id: string;
+          text: string;
+          created_at?: string;
+          completed_at: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          task_id?: string;
+          text?: string;
+          created_at?: string;
+          completed_at?: string;
         };
       };
     };

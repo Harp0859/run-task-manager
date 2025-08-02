@@ -10,6 +10,7 @@ export const saveTask = async (task: Task, userId: string) => {
         user_id: userId,
         text: task.text,
         completed: task.completed,
+        is_cleared: task.is_cleared || false,
         created_at: task.createdAt.toISOString(),
         completed_at: task.completedAt?.toISOString(),
       });
@@ -24,20 +25,41 @@ export const saveTask = async (task: Task, userId: string) => {
 
 export const updateTask = async (task: Task, userId: string) => {
   try {
+    console.log('🔄 Updating task in database:', {
+      id: task.id,
+      text: task.text,
+      completed: task.completed,
+      is_cleared: task.is_cleared,
+      completedAt: task.completedAt?.toISOString(),
+      userId: userId
+    });
+
     const { data, error } = await supabase
       .from('tasks')
       .update({
         text: task.text,
         completed: task.completed,
+        is_cleared: task.is_cleared,
         completed_at: task.completedAt?.toISOString(),
       })
       .eq('id', task.id)
       .eq('user_id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error updating task in database:', error);
+      throw error;
+    }
+
+    console.log('✅ Task updated successfully in database:', {
+      id: task.id,
+      completed: task.completed,
+      is_cleared: task.is_cleared,
+      data: data
+    });
+
     return { data, error: null };
   } catch (error) {
-    console.error('Error updating task:', error);
+    console.error('❌ Error updating task:', error);
     return { data: null, error };
   }
 };
@@ -58,26 +80,108 @@ export const deleteTask = async (taskId: string, userId: string) => {
   }
 };
 
+export const clearCompletedTasks = async (userId: string) => {
+  try {
+    console.log('🔄 Starting clearCompletedTasks for user:', userId);
+    
+    // Get all completed tasks that are not yet cleared
+    const { data: completedTasks, error: fetchError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .eq('is_cleared', false);
+
+    if (fetchError) {
+      console.error('❌ Error fetching completed tasks:', fetchError);
+      throw fetchError;
+    }
+
+    console.log('📋 Found completed tasks to clear:', completedTasks?.length || 0);
+
+    if (completedTasks && completedTasks.length > 0) {
+      // Move completed tasks to task_history
+      const historyData = completedTasks.map((task: any) => ({
+        user_id: userId,
+        task_id: task.id,
+        text: task.text,
+        created_at: task.created_at,
+        completed_at: task.completed_at,
+      }));
+
+      console.log('📚 Moving to task_history:', historyData.length, 'tasks');
+
+      // Insert into task_history
+      const { error: historyError } = await supabase
+        .from('task_history')
+        .insert(historyData);
+
+      if (historyError) {
+        console.error('❌ Error moving to task_history:', historyError);
+        throw historyError;
+      }
+
+      console.log('✅ Successfully moved to task_history');
+
+      // Mark tasks as cleared instead of deleting them
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ is_cleared: true })
+        .eq('user_id', userId)
+        .eq('completed', true)
+        .eq('is_cleared', false);
+
+      if (updateError) {
+        console.error('❌ Error marking tasks as cleared:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Successfully marked tasks as cleared');
+    } else {
+      console.log('ℹ️ No completed tasks found to clear');
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('❌ Error in clearCompletedTasks:', error);
+    return { error };
+  }
+};
+
 export const loadTasks = async (userId: string) => {
   try {
+    // First, try to load all tasks without the is_cleared filter
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error loading tasks:', error);
+      return { data: [], error };
+    }
 
     // Convert database format to app format
     const tasks: Task[] = data?.map((dbTask: any) => ({
       id: dbTask.id,
       text: dbTask.text,
       completed: dbTask.completed,
+      is_cleared: dbTask.is_cleared || false, // Default to false if column doesn't exist
       createdAt: new Date(dbTask.created_at),
       completedAt: dbTask.completed_at ? new Date(dbTask.completed_at) : undefined,
     })) || [];
 
-    return { data: tasks, error: null };
+    // Filter out cleared tasks if the column exists
+    const activeTasks = tasks.filter(task => !task.is_cleared);
+
+    console.log('📋 Loaded tasks from database:', {
+      totalTasks: tasks.length,
+      activeTasks: activeTasks.length,
+      hasIsClearedColumn: tasks.some(task => 'is_cleared' in task)
+    });
+
+    return { data: activeTasks, error: null };
   } catch (error) {
     console.error('Error loading tasks:', error);
     return { data: [], error };

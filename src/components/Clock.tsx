@@ -10,63 +10,10 @@ interface ClockProps {
 const Clock: React.FC<ClockProps> = ({ timezone }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Sync with internet time
-  useEffect(() => {
-    const syncWithInternetTime = async () => {
-      try {
-        // Try to get time from multiple sources
-        const responses = await Promise.allSettled([
-          fetch('https://worldtimeapi.org/api/ip'),
-          fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=demo&format=json&by=zone&zone=UTC'),
-          fetch('https://httpbin.org/delay/0')
-        ]);
-
-        const validResponse = responses.find(response => 
-          response.status === 'fulfilled' && 
-          response.value instanceof Response && 
-          response.value.ok
-        );
-
-        if (validResponse && validResponse.status === 'fulfilled') {
-          const response = validResponse.value as Response;
-          const data = await response.json();
-          
-          let internetTime: Date;
-          
-          if (data.datetime) {
-            // WorldTimeAPI format
-            internetTime = new Date(data.datetime);
-          } else if (data.formatted) {
-            // TimeZoneDB format
-            internetTime = new Date(data.formatted);
-          } else {
-            // Fallback to response headers
-            const dateHeader = response.headers.get('date');
-            internetTime = dateHeader ? new Date(dateHeader) : new Date();
-          }
-
-          setCurrentTime(internetTime);
-        }
-      } catch (error) {
-        console.log('Using local time as fallback');
-        setCurrentTime(new Date());
-      }
-    };
-
-    // Sync immediately and then every 5 minutes
-    syncWithInternetTime();
-    const syncInterval = setInterval(syncWithInternetTime, 5 * 60 * 1000);
-
-    return () => clearInterval(syncInterval);
-  }, []);
-
   // Update time every second
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(prev => {
-        const newTime = new Date(prev.getTime() + 1000);
-        return newTime;
-      });
+      setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(timer);
@@ -94,9 +41,12 @@ const Clock: React.FC<ClockProps> = ({ timezone }) => {
   // Convert to IST if timezone is IST
   const displayTime = useMemo(() => {
     if (timezone === 'IST') {
-      // Get current local time and convert to IST
+      // Convert local time to IST (UTC + 5:30)
       const localTime = new Date();
-      const istTime = new Date(localTime.getTime() + (5.5 * 60 * 60 * 1000));
+      const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+      const istTime = new Date(utcTime + (5.5 * 60 * 60 * 1000));
+      console.log('🕐 Local time:', localTime.toLocaleString());
+      console.log('🌍 IST time:', istTime.toLocaleString());
       return formatTime(istTime);
     }
     return formatTime(currentTime);

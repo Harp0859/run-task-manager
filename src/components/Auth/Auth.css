@@ -1,21 +1,29 @@
+/* Force dark theme for auth components */
+.auth-container,
+.auth-container * {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
 .auth-container {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%) !important;
   padding: 20px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .auth-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 20px;
   padding: 40px;
   width: 100%;
   max-width: 400px;
   backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .auth-header {
@@ -26,14 +34,14 @@
 .auth-title {
   font-size: 28px;
   font-weight: 700;
-  color: #22c55e;
+  color: #22c55e !important;
   margin: 0 0 8px 0;
   letter-spacing: -0.5px;
 }
 
 .auth-subtitle {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7) !important;
   margin: 0;
   font-weight: 400;
 }
@@ -57,17 +65,17 @@
 .input-icon {
   position: absolute;
   left: 16px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6) !important;
   z-index: 1;
 }
 
 .auth-input {
   width: 100%;
   padding: 16px 16px 16px 48px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9) !important;
   font-size: 14px;
   font-weight: 400;
   outline: none;
@@ -76,13 +84,13 @@
 }
 
 .auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .auth-input:focus {
-  border-color: rgba(34, 197, 94, 0.5);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(34, 197, 94, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  background: rgba(255, 255, 255, 0.12) !important;
 }
 
 .password-toggle {
@@ -90,7 +98,7 @@
   right: 16px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.5) !important;
   cursor: pointer;
   padding: 0;
   display: flex;
