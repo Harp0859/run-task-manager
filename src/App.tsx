@@ -20,8 +20,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Task, AppState, Settings as SettingsType } from './types';
 import { 
   loadFromStorage, 
-  clearCompletedTasks, 
-  resetDailyTasks, 
   addToHistory, 
   getCurrentStreak 
 } from './utils/storage';
@@ -54,8 +52,8 @@ const AppContent: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  // Calculate streaks from completed tasks
-  const calculateStreaks = useCallback((tasks: Task[]) => {
+  // Calculate streaks from completed tasks and history
+  const calculateStreaks = useCallback((tasks: Task[], taskHistory: any[] = []) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfWeek = new Date(today);
@@ -66,25 +64,29 @@ const AppContent: React.FC = () => {
     let weeklyStreak = 0;
     let monthlyStreak = 0;
 
-    tasks.forEach(task => {
-      if (task.completed && task.completedAt) {
-        const completedDate = new Date(task.completedAt);
-        const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
-        
-        // Daily streak: tasks completed today
-        if (completedDay.getTime() === today.getTime()) {
-          dailyStreak++;
-        }
-        
-        // Weekly streak: tasks completed this week
-        if (completedDate >= startOfWeek && completedDate <= now) {
-          weeklyStreak++;
-        }
-        
-        // Monthly streak: tasks completed this month
-        if (completedDate >= startOfMonth && completedDate <= now) {
-          monthlyStreak++;
-        }
+    // Combine current tasks and task history for streak calculation
+    const allCompletedTasks = [
+      ...tasks.filter(task => task.completed && task.completedAt),
+      ...taskHistory
+    ];
+
+    allCompletedTasks.forEach(task => {
+      const completedDate = new Date(task.completedAt);
+      const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+      
+      // Daily streak: tasks completed today
+      if (completedDay.getTime() === today.getTime()) {
+        dailyStreak++;
+      }
+      
+      // Weekly streak: tasks completed this week
+      if (completedDate >= startOfWeek && completedDate <= now) {
+        weeklyStreak++;
+      }
+      
+      // Monthly streak: tasks completed this month
+      if (completedDate >= startOfMonth && completedDate <= now) {
+        monthlyStreak++;
       }
     });
 
@@ -97,14 +99,19 @@ const AppContent: React.FC = () => {
     const lastReset = appState.lastResetDate;
     
     if (today !== lastReset) {
-      const updatedTasks = resetDailyTasks(appState.tasks);
+      // Reset completed tasks for new day
+      const updatedTasks = appState.tasks.map(task => ({
+        ...task,
+        completed: false,
+        completedAt: undefined,
+      }));
+      
       const newState = {
         ...appState,
         tasks: updatedTasks,
         lastResetDate: today,
       };
       setAppState(newState);
-      // Removed saveToStorage since we're using Supabase
     }
     
     setIsInitialized(true);
@@ -143,7 +150,7 @@ const AppContent: React.FC = () => {
           }
           
           // Calculate streaks from loaded tasks
-          const calculatedStreaks = calculateStreaks(tasks || []);
+          const calculatedStreaks = calculateStreaks(tasks || [], taskHistory || []);
           
           // Reset app state with user-specific data
           setAppState({
@@ -240,30 +247,35 @@ const AppContent: React.FC = () => {
       startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Count completed tasks for each period
+      // Count completed tasks for each period (including history)
+      const allCompletedTasks = [
+        ...updatedTasks.filter(task => task.completed && task.completedAt),
+        ...prev.taskHistory
+      ];
+
       let dailyStreak = 0;
       let weeklyStreak = 0;
       let monthlyStreak = 0;
 
-      updatedTasks.forEach(task => {
-        if (task.completed && task.completedAt) {
-          const completedDate = new Date(task.completedAt);
-          const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
-          
-          // Daily streak: tasks completed today
-          if (completedDay.getTime() === today.getTime()) {
-            dailyStreak++;
-          }
-          
-          // Weekly streak: tasks completed this week
-          if (completedDate >= startOfWeek && completedDate <= now) {
-            weeklyStreak++;
-          }
-          
-          // Monthly streak: tasks completed this month
-          if (completedDate >= startOfMonth && completedDate <= now) {
-            monthlyStreak++;
-          }
+      allCompletedTasks.forEach(task => {
+        if (!task.completedAt) return; // Skip if no completion date
+        
+        const completedDate = new Date(task.completedAt);
+        const completedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+        
+        // Daily streak: tasks completed today
+        if (completedDay.getTime() === today.getTime()) {
+          dailyStreak++;
+        }
+        
+        // Weekly streak: tasks completed this week
+        if (completedDate >= startOfWeek && completedDate <= now) {
+          weeklyStreak++;
+        }
+        
+        // Monthly streak: tasks completed this month
+        if (completedDate >= startOfMonth && completedDate <= now) {
+          monthlyStreak++;
         }
       });
 
@@ -329,10 +341,12 @@ const AppContent: React.FC = () => {
       }
     }
     
-    // Update local state
+    // Update local state - remove completed tasks from home page
+    // but keep them in taskHistory for streaks calculation
     setAppState(prev => ({
       ...prev,
       tasks: prev.tasks.filter(task => !task.completed),
+      // Note: taskHistory remains unchanged to preserve streaks
     }));
   }, [user, appState.tasks]);
 

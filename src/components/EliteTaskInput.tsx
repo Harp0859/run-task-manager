@@ -8,21 +8,20 @@ interface EliteTaskInputProps {
 }
 
 const EliteTaskInput: React.FC<EliteTaskInputProps> = ({ onAddTask }) => {
-  const [text, setText] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
+  const [inputValue, setInputValue] = useState('');
   const [showSparkles, setShowSparkles] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (text.trim()) {
+    if (inputValue.trim()) {
       // Haptic feedback simulation
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
       
-      onAddTask(text.trim());
-      setText('');
+      onAddTask(inputValue.trim());
+      setInputValue('');
       setShowSparkles(true);
       
       setTimeout(() => setShowSparkles(false), 1000);
@@ -30,14 +29,14 @@ const EliteTaskInput: React.FC<EliteTaskInputProps> = ({ onAddTask }) => {
   };
 
   const handleFocus = () => {
-    setIsFocused(true);
+    // setIsFocused(true); // This line is removed
     if (navigator.vibrate) {
       navigator.vibrate(20);
     }
   };
 
   const handleBlur = () => {
-    setIsFocused(false);
+    // setIsFocused(false); // This line is removed
   };
 
   useEffect(() => {
@@ -64,8 +63,8 @@ const EliteTaskInput: React.FC<EliteTaskInputProps> = ({ onAddTask }) => {
         <input
           ref={inputRef}
           type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder="What's your next task?"
@@ -74,7 +73,7 @@ const EliteTaskInput: React.FC<EliteTaskInputProps> = ({ onAddTask }) => {
         />
         
         <AnimatePresence>
-          {text.trim() && (
+          {inputValue.trim() && (
             <motion.button
               type="submit"
               className="elite-task-input-btn"
