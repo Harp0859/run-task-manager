@@ -1,0 +1,87 @@
+.task-item {
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.task-content {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.task-content:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.task-content.completed {
+  opacity: 0.6;
+}
+
+.task-content.completed .task-text {
+  text-decoration: line-through;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.complete-button {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.task-content.completed .complete-button {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-color: #22c55e;
+}
+
+.complete-button:hover {
+  border-color: #22c55e;
+  transform: scale(1.1);
+}
+
+.check-icon {
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-text {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 400;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  word-break: break-word;
+}
+
+.delete-button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.delete-button:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+} 

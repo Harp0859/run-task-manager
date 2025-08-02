@@ -1,0 +1,372 @@
+/* Elite App Styles - Cred/Notion inspired */
+.elite-app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+  position: relative;
+  overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+.elite-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+}
+
+.elite-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(34, 197, 94, 0.3);
+  border-top: 3px solid #22c55e;
+  border-radius: 50%;
+  margin-bottom: 20px;
+}
+
+.elite-loading-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.elite-welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.elite-welcome-content {
+  text-align: center;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 400px;
+}
+
+.elite-welcome-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.elite-welcome-title {
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.5px;
+}
+
+.elite-welcome-subtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.elite-app-header {
+  padding: 40px 12px 20px;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+}
+
+.elite-header-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.elite-app-title {
+  font-size: 48px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.elite-app-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 20px 0;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.elite-date-display {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 16px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.elite-app-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 12px 40px;
+  position: relative;
+  z-index: 10;
+}
+
+.elite-clear-completed-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 48px;
+  height: 48px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.elite-clear-completed-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.2);
+}
+
+.elite-history-section {
+  margin-top: 32px;
+  padding: 0 24px;
+}
+
+.elite-history-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.elite-history-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 8px;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.elite-history-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.elite-history-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 4px;
+}
+
+.elite-history-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+  border-bottom: none;
+  backdrop-filter: none;
+  z-index: 200;
+  padding: 8px 16px;
+  height: 56px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  gap: 8px;
+  height: 40px;
+}
+
+.mobile-header-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 50%;
+  min-width: 60px;
+  height: 40px;
+}
+
+.mobile-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 50%;
+  min-width: 120px;
+  height: 40px;
+}
+
+.mobile-streak-counter {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+}
+
+/* Desktop Header Elements */
+.desktop-header-elements {
+  display: block;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+  }
+  
+  .desktop-header-elements {
+    display: none;
+  }
+  
+  .elite-app-header {
+    margin-top: 60px;
+    padding: 40px 8px 15px;
+  }
+  
+  .elite-app-title {
+    font-size: 36px;
+  }
+  
+  .elite-app-subtitle {
+    font-size: 12px;
+  }
+  
+  .elite-date-display {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+  
+  .elite-app-content {
+    padding: 0 8px 30px;
+  }
+  
+  .elite-clear-completed-btn {
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 16px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .elite-app-header {
+    padding: 70px 6px 10px;
+  }
+  
+  .elite-app-title {
+    font-size: 32px;
+  }
+  
+  .elite-app-subtitle {
+    font-size: 11px;
+  }
+  
+  .elite-date-display {
+    font-size: 10px;
+    padding: 5px 10px;
+  }
+  
+  .elite-app-content {
+    padding: 0 6px 25px;
+  }
+  
+  .elite-clear-completed-btn {
+    bottom: 15px;
+    right: 15px;
+    padding: 8px 14px;
+    font-size: 10px;
+  }
+  
+  .elite-welcome-title {
+    font-size: 24px;
+  }
+  
+  .elite-welcome-content {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .elite-app-header {
+    padding: 60px 4px 8px;
+  }
+  
+  .elite-app-title {
+    font-size: 28px;
+  }
+  
+  .elite-app-subtitle {
+    font-size: 10px;
+  }
+  
+  .elite-date-display {
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+  
+  .elite-app-content {
+    padding: 0 4px 20px;
+  }
+  
+  .elite-clear-completed-btn {
+    bottom: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    font-size: 9px;
+  }
+} 
